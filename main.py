@@ -161,13 +161,32 @@ class JustRunMyAppLoginBot:
                 ))
                 logger.info("重启后检测到 Running 状态")
 
-            # 11. 点击 Reset Timer 按钮
+            # 11. 点击 Reset Timer 按钮（使用 XPath 匹配文字，更稳定）
             logger.info("Step 11: 点击 Reset Timer 按钮")
-            reset_btn = self.wait.until(EC.element_to_be_clickable(
-                (By.CSS_SELECTOR, 'button:contains("Reset Timer"), button[aria-label*="Reset"]')
-            ))
+            try:
+                # 首选 XPath：匹配包含 "Reset Timer" 或 "Reset" 的按钮（忽略大小写）
+                reset_btn = self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '//button[contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "reset timer") or contains(translate(text(), "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz"), "reset")]')
+                ))
+                logger.info("使用 XPath 定位到 Reset Timer 按钮")
+            except:
+                logger.warning("XPath 未找到，尝试其他方式...")
+            try:
+                # 备选：匹配 class 包含 "reset" 或 "timer"（根据实际 class 调整）
+                reset_btn = self.wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, 'button[class*="reset"], button[class*="timer"], button[aria-label*="reset"], button[data-testid*="reset"]')
+                ))
+                logger.info("使用 CSS class 定位到 Reset Timer 按钮")
+            except:
+                # 最终 fallback：找所有 button 中含 "Reset" 文字的
+                reset_btn = self.wait.until(EC.element_to_be_clickable(
+                (By.XPATH, '//button[contains(., "Reset")]')
+                ))
+                logger.info("使用简单 XPath 含 'Reset' 定位")
+
+            # 使用 JS 点击（更可靠，避免 overlay/动画问题）
             self.driver.execute_script("arguments[0].click();", reset_btn)
-            time.sleep(3)  # 等待操作生效
+            time.sleep(3)  # 等待操作生效（可能有弹窗或刷新）
             self.driver.save_screenshot("debug_8_after_reset.png")
             logger.info("定时器已重置，续费完成")
 
