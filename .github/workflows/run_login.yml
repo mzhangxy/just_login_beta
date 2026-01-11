@@ -34,3 +34,10 @@ jobs:
         TWOCAPTCHA_API_KEY: ${{ secrets.TWOCAPTCHA_API_KEY }}
         GITHUB_ACTIONS: "true" # 告诉 Python 脚本现在是在云端运行
       run: python main.py
+    - name: Upload Error Screenshot
+      if: failure() || always()  # 无论成功还是失败都尝试上传截图
+      uses: actions/upload-artifact@v4
+      with:
+        name: debug-screenshot
+        path: error_debug.png
+        retention-days: 1 # 截图只保留一天，节省空间
