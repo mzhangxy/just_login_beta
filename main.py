@@ -6,7 +6,6 @@ from twocaptcha import TwoCaptcha
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException, NoSuchElementException
 
 # --- 日志配置 ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -20,7 +19,7 @@ class JustRunMyAppBot:
         
         self.solver = TwoCaptcha(self.api_key)
         self.driver = self._setup_driver()
-        self.wait = WebDriverWait(self.driver, 20)
+        self.wait = WebDriverWait(self.driver, 35) # 增加等待时间以应对重定向
 
     def _setup_driver(self):
         options = uc.ChromeOptions()
@@ -30,83 +29,64 @@ class JustRunMyAppBot:
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
         
-        options.add_argument('--window-size=1920,1080') # 强制大分辨率，防止元素重叠
+        options.add_argument('--window-size=1920,1080')
         options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         return uc.Chrome(options=options)
 
-    def solve_turnstile_with_retry(self, sitekey, retries=3):
-        for i in range(retries):
-            try:
-                logger.info(f"第 {i+1} 次尝试请求 2Captcha 解析...")
-                result = self.solver.turnstile(sitekey=sitekey, url=self.driver.current_url)
-                if result and 'code' in result:
-                    return result['code']
-            except Exception as e:
-                logger.warning(f"第 {i+1} 次尝试失败: {e}")
-                time.sleep(5)
-        raise Exception("无法破解验证码")
-
     def login(self):
         try:
-            # 1. 直接访问登录页面 (跳过首页点击，减少出错概率)
-            login_url = "https://https://justrunmy.app/id/Account/Login"
-            logger.info(f"直接访问登录页: {login_url}")
-            self.driver.get(login_url)
+            # 1. 访问首页并处理 Cookie
+            logger.info("正在打开首页并处理重定向...")
+            self.driver.get("https://justrunmy.app")
+            
+            # 2. 点击 Sign in 触发复杂的重定向链
+            # 这一步会经历：主页 -> /panel -> /id/account/login?...
+            signin_btn = self.wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "Sign in")))
+            signin_btn.click()
 
-            # 2. 核心：处理可能存在的 iframe
-            # 有些登录框被包裹在 iframe 里，Selenium 必须切换进去才能操作
-            time.sleep(5) # 给页面一点渲染时间
-            if len(self.driver.find_elements(By.TAG_NAME, "iframe")) > 0:
-                logger.info("检测到 iframe，尝试切换上下文...")
-                try:
-                    # 尝试切换到第一个 iframe（通常是登录表单所在的那个）
-                    self.driver.switch_to.frame(0) 
-                    logger.info("已切换到 iframe")
-                except:
-                    logger.info("切换 iframe 失败，保持原样")
+            # 3. 【关键修复】等待 URL 彻底稳定在认证页面
+            logger.info("等待认证页面加载稳定...")
+            self.wait.until(EC.url_contains("account/login"))
+            # 强制等待几秒，确保单页应用（SPA）的脚本执行完毕
+            time.sleep(6) 
+            
+            # 确保此时 Selenium 聚焦在主文档，防止被之前的 iframe 干扰
+            self.driver.switch_to.default_content()
 
-            # 3. 输入账号和密码
-            logger.info("准备输入凭据...")
-            # 增加重试逻辑，防止元素虽然在 DOM 里但不可交互
-            email_field = self.wait.until(EC.element_to_be_clickable((By.NAME, "email")))
-            email_field.clear()
-            email_field.send_keys(self.email)
-            logger.info("Email 已输入")
+            # 4. 尝试输入用户名和密码 (使用显式可见性等待)
+            logger.info(f"当前 URL: {self.driver.current_url}，准备输入凭据...")
+            email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "email")))
+            
+            # 使用 JS 强力注入，防止 send_keys 失败
+            self.driver.execute_script("arguments[0].value = arguments[1];", email_input, self.email)
+            password_input = self.driver.find_element(By.NAME, "password")
+            self.driver.execute_script("arguments[0].value = arguments[1];", password_input, self.password)
+            logger.info("用户名和密码已注入")
 
-            password_field = self.driver.find_element(By.NAME, "password")
-            password_field.clear()
-            password_field.send_keys(self.password)
-            logger.info("密码 已输入")
-
-            # 4. 提取 Sitekey (如果验证码在 iframe 外，可能需要跳回主页面，但通常在内)
-            logger.info("正在提取 Sitekey...")
+            # 5. 处理 Cloudflare Turnstile (这是你之前能做到的步骤)
+            logger.info("正在检测并破解验证码...")
             cf_container = self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "cf-turnstile")))
             sitekey = cf_container.get_attribute("data-sitekey")
-            logger.info(f"获取到 Sitekey: {sitekey}")
-
-            # 5. 破解验证码
-            token = self.solve_turnstile_with_retry(sitekey)
-
-            # 6. 注入 Token
-            logger.info("正在注入 Token...")
+            
+            result = self.solver.turnstile(sitekey=sitekey, url=self.driver.current_url)
+            token = result['code']
+            
+            # 6. 注入 Token 并执行登录
             self.driver.execute_script(f'document.getElementsByName("cf-turnstile-response")[0].value="{token}";')
-            time.sleep(2)
-
-            # 7. 提交登录 (使用 JS 强力点击)
-            logger.info("尝试点击提交按钮...")
+            logger.info("Token 注入完毕，准备提交")
+            
+            # 7. 提交表单
             submit_btn = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
             self.driver.execute_script("arguments[0].click();", submit_btn)
 
-            # 8. 验证
-            logger.info("等待跳转...")
-            # 如果在 iframe 里，跳转后可能需要回到主页面才能检测 URL
-            self.driver.switch_to.default_content() 
+            # 8. 最终验证
             self.wait.until(EC.url_contains("/panel"))
             logger.info("🎉 登录成功！")
 
         except Exception as e:
             self.driver.save_screenshot("error_debug.png")
             logger.error(f"❌ 运行失败: {e}")
+            logger.info(f"失败时的 URL: {self.driver.current_url}")
         finally:
             self.driver.quit()
 
