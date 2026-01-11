@@ -49,7 +49,7 @@ class JustRunMyAppBot:
     def login(self):
         try:
             # 1. 直接访问登录页面 (跳过首页点击，减少出错概率)
-            login_url = "https://justrunmy.app/login"
+            login_url = "https://https://justrunmy.app/id/Account/Login"
             logger.info(f"直接访问登录页: {login_url}")
             self.driver.get(login_url)
 
