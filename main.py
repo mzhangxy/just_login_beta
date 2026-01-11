@@ -14,9 +14,9 @@ logger = logging.getLogger(__name__)
 
 class JustRunMyAppBot:
     def __init__(self):
-        self.email = os.getenv("USER_EMAIL", "你的邮箱")
-        self.password = os.getenv("USER_PASSWORD", "你的密码")
-        self.api_key = os.getenv("TWOCAPTCHA_API_KEY", "你的API_KEY")
+        self.email = os.getenv("USER_EMAIL", "")
+        self.password = os.getenv("USER_PASSWORD", "")
+        self.api_key = os.getenv("TWOCAPTCHA_API_KEY", "")
 
         # 初始化 2Captcha，并设置超时时间长一点，应对网络波动
         self.solver = TwoCaptcha(self.api_key)
@@ -25,11 +25,13 @@ class JustRunMyAppBot:
 
     def _setup_driver(self):
         options = uc.ChromeOptions()
-        if os.getenv("GITHUB_ACTIONS"):
+        # 自动识别是否在 GitHub 环境
+        if os.getenv("GITHUB_ACTIONS") == "true":
+            logger.info("检测到 GitHub Actions 环境，启动 Headless 模式")
             options.add_argument('--headless')
-        options.add_argument('--no-sandbox')
-        options.add_argument(
-            '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+            options.add_argument('--no-sandbox')
+            options.add_argument('--disable-dev-shm-usage')
+            options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         return uc.Chrome(options=options)
 
     def solve_turnstile_with_retry(self, sitekey, retries=3):
