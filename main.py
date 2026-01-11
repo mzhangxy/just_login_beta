@@ -35,21 +35,26 @@ class JustRunMyAppBot:
         return uc.Chrome(options=options)
 
     def solve_turnstile_with_retry(self, sitekey, retries=3):
-        """增加重试机制，应对 SSL 连接中断问题"""
+        """修复参数传递问题，确保调用 turnstile 专用接口"""
         for i in range(retries):
             try:
-                logger.info(f"第 {i + 1} 次尝试请求 2Captcha 解析...")
-                # 使用通用的 solve 方法，有时比直接调用 turnstile 更稳
-                result = self.solver.solve({
-                    'method': 'turnstile',
-                    'sitekey': sitekey,
-                    'pageurl': self.driver.current_url
-                })
-                return result['code']
+                logger.info(f"第 {i+1} 次尝试请求 2Captcha 解析...")
+                
+                # 注意：这里直接调用 solver.turnstile 而不是 .solve
+                # 显式传递 sitekey 和 url
+                result = self.solver.turnstile(
+                    sitekey=sitekey,
+                    url=self.driver.current_url
+                )
+                
+                # 如果返回的结果里包含 'code'，说明成功了
+                if result and 'code' in result:
+                    return result['code']
+                
             except Exception as e:
-                logger.warning(f"第 {i + 1} 次请求失败: {e}")
+                logger.warning(f"第 {i+1} 次请求失败: {e}")
                 if i < retries - 1:
-                    time.sleep(5)  # 等待 5 秒后重试
+                    time.sleep(5)
                 else:
                     raise e
 
