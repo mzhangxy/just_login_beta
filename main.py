@@ -8,51 +8,48 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
 
+# --- 日志配置 ---
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
-
 class JustRunMyAppBot:
     def __init__(self):
-        self.email = os.getenv("USER_EMAIL", "")
-        self.password = os.getenv("USER_PASSWORD", "")
-        self.api_key = os.getenv("TWOCAPTCHA_API_KEY", "")
-
-        # 初始化 2Captcha，并设置超时时间长一点，应对网络波动
+        # 从 GitHub Secrets 读取变量
+        self.email = os.getenv("USER_EMAIL")
+        self.password = os.getenv("USER_PASSWORD")
+        self.api_key = os.getenv("TWOCAPTCHA_API_KEY")
+        
+        # 初始化 2Captcha 
         self.solver = TwoCaptcha(self.api_key)
         self.driver = self._setup_driver()
         self.wait = WebDriverWait(self.driver, 30)
 
     def _setup_driver(self):
         options = uc.ChromeOptions()
-        # 自动识别是否在 GitHub 环境
+        # 自动识别环境：GitHub Actions 必须开启无头模式
         if os.getenv("GITHUB_ACTIONS") == "true":
-            logger.info("检测到 GitHub Actions 环境，启动 Headless 模式")
+            logger.info("检测到 GitHub 环境，启动 Headless 模式")
             options.add_argument('--headless')
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+        
+        # 伪装 User-Agent
+        options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         return uc.Chrome(options=options)
 
     def solve_turnstile_with_retry(self, sitekey, retries=3):
-        """修复参数传递问题，确保调用 turnstile 专用接口"""
+        """带有重试机制的验证码破解"""
         for i in range(retries):
             try:
                 logger.info(f"第 {i+1} 次尝试请求 2Captcha 解析...")
-                
-                # 注意：这里直接调用 solver.turnstile 而不是 .solve
-                # 显式传递 sitekey 和 url
                 result = self.solver.turnstile(
                     sitekey=sitekey,
                     url=self.driver.current_url
                 )
-                
-                # 如果返回的结果里包含 'code'，说明成功了
                 if result and 'code' in result:
                     return result['code']
-                
             except Exception as e:
-                logger.warning(f"第 {i+1} 次请求失败: {e}")
+                logger.warning(f"第 {i+1} 次尝试失败: {e}")
                 if i < retries - 1:
                     time.sleep(5)
                 else:
@@ -60,60 +57,64 @@ class JustRunMyAppBot:
 
     def login(self):
         try:
+            # 1. 打开首页
             logger.info("正在打开首页...")
             self.driver.get("https://justrunmy.app")
 
-            # 1. 处理 Cookie
+            # 2. 处理 Cookie 弹窗
             try:
-                accept_btn = self.wait.until(
-                    EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept All')]")))
+                accept_btn = self.wait.until(EC.element_to_be_clickable((By.XPATH, "//button[contains(text(), 'Accept All')]")))
                 accept_btn.click()
-                logger.info("Cookie 弹窗已处理")
+                logger.info("Cookie 弹窗处理完毕")
             except:
-                pass
+                logger.info("未发现 Cookie 弹窗，跳过")
 
-            # 2. 点击登录
+            # 3. 进入登录页
+            logger.info("点击 Sign in 按钮...")
             signin_nav = self.wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "Sign in")))
             signin_nav.click()
 
-            # --- 关键修改点：等待 CF 盾完全渲染 ---
-            logger.info("进入登录页，等待网页完全加载...")
-            time.sleep(8)  # 额外给 8 秒，让 Turnstile 那个小方块彻底转出来
+            # 4. 输入账号和密码 (放在注入 Token 之前，更符合真人逻辑)
+            logger.info("正在输入 Email 和 Password...")
+            email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "email")))
+            email_input.send_keys(self.email)
+            
+            password_input = self.driver.find_element(By.NAME, "password")
+            password_input.send_keys(self.password)
 
-            # 确保容器已经出现在 DOM 中
+            # 5. 等待 CF 盾加载并提取 Sitekey
+            logger.info("等待 Cloudflare 盾牌加载...")
+            time.sleep(8) # 强制等待，确保 Sitekey 渲染
             cf_container = self.wait.until(EC.presence_of_element_located((By.CLASS_NAME, "cf-turnstile")))
-            sitekey = cf_element = cf_container.get_attribute("data-sitekey")
+            sitekey = cf_container.get_attribute("data-sitekey")
 
-            if not sitekey:
-                logger.error("未能提取到 Sitekey，页面可能未完全加载")
-                return
-
-            # 3. 破解验证码（带重试机制）
+            # 6. 获取 2Captcha Token
             token = self.solve_turnstile_with_retry(sitekey)
 
-            # 4. 注入 Token
+            # 7. 注入 Token 并登录
+            logger.info("正在注入 Token 并执行登录...")
+            # 注入 Token 到隐藏框
             self.driver.execute_script(f'document.getElementsByName("cf-turnstile-response")[0].value="{token}";')
-            # 触发潜在的回调
-            self.driver.execute_script('if(window.cfCallback){cfCallback();}')
-            logger.info("Token 注入完毕")
+            
+            # 注入后稍等 2 秒，让网页 JS 捕获到数据变化
+            time.sleep(2)
 
-            # 5. 输入账号
-            self.wait.until(EC.visibility_of_element_located((By.NAME, "email"))).send_keys(self.email)
-            self.driver.find_element(By.NAME, "password").send_keys(self.password)
+            # 使用 JavaScript 强制点击登录按钮（防止按钮被遮挡导致点击失败）
+            submit_btn = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']")
+            self.driver.execute_script("arguments[0].click();", submit_btn)
 
-            # 6. 提交
-            self.driver.find_element(By.CSS_SELECTOR, "button[type='submit']").click()
-
-            # 7. 验证
+            # 8. 验证是否跳转成功
+            logger.info("正在等待跳转至控制台...")
             self.wait.until(EC.url_contains("/panel"))
-            logger.info("🎉 登录成功！")
+            logger.info("🎉 登录成功！当前页面: " + self.driver.title)
 
         except Exception as e:
+            # 截图是云端调试的唯一“眼睛”
             self.driver.save_screenshot("error_debug.png")
-            logger.error(f"失败原因: {e}")
+            logger.error(f"❌ 运行失败: {e}")
         finally:
+            logger.info("流程结束，关闭浏览器")
             self.driver.quit()
-
 
 if __name__ == "__main__":
     bot = JustRunMyAppBot()
