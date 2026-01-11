@@ -160,6 +160,7 @@ class JustRunMyAppLoginBot:
                     (By.XPATH, '//div[contains(text(), "Running") or contains(., "Running")]')
                 ))
                 logger.info("重启后检测到 Running 状态")
+                logger.info(f"详情页源码片段: {self.driver.page_source.lower()[self.driver.page_source.lower().find('reset'):self.driver.page_source.lower().find('reset')+500]}...")
 
             # 11. 点击 Reset Timer 按钮（使用 CSS selector 匹配绿色背景 + 白文字）
             logger.info("Step 11: 点击 Reset Timer 按钮")
