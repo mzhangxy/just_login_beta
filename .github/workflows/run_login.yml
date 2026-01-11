@@ -1,0 +1,36 @@
+name: Auto Login Bot
+
+on:
+  workflow_dispatch: # 允许你手动点击按钮运行
+  schedule:
+    - cron: '0 0 * * *' # 每天国际标准时间 0 点自动运行
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.12' # 建议使用稳定的 3.12
+
+    - name: Install dependencies
+      run: |
+        pip install undetected-chromedriver 2captcha-python selenium setuptools
+
+    - name: Install Google Chrome
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y google-chrome-stable
+
+    - name: Run Python Script
+      env:
+        USER_EMAIL: ${{ secrets.USER_EMAIL }}
+        USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+        TWOCAPTCHA_API_KEY: ${{ secrets.TWOCAPTCHA_API_KEY }}
+        GITHUB_ACTIONS: "true" # 告诉 Python 脚本现在是在云端运行
+      run: python main.py
