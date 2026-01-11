@@ -36,7 +36,7 @@ class JustRunMyAppLoginBot:
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-gpu')
         
-        driver = uc.Chrome(options=options, version_main=130)  # 调整版本如果启动失败
+        driver = uc.Chrome(options=options, version_main=143)  # 修改为 143 以匹配 Chrome 版本
         
         # 隐藏 webdriver 痕迹
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
