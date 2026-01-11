@@ -55,12 +55,15 @@ class JustRunMyAppBot:
 
             # 4. 尝试输入用户名和密码 (使用显式可见性等待)
             logger.info(f"当前 URL: {self.driver.current_url}，准备输入凭据...")
-            email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "email")))
+            email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "Input.Username")))
+            #email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "email")))
             
             # 使用 JS 强力注入，防止 send_keys 失败
             self.driver.execute_script("arguments[0].value = arguments[1];", email_input, self.email)
-            password_input = self.driver.find_element(By.NAME, "password")
+            password_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "Input.Password")))
             self.driver.execute_script("arguments[0].value = arguments[1];", password_input, self.password)
+            # password_input = self.driver.find_element(By.NAME, "password")
+            # self.driver.execute_script("arguments[0].value = arguments[1];", password_input, self.password)
             logger.info("用户名和密码已注入")
 
             # 5. 处理 Cloudflare Turnstile (这是你之前能做到的步骤)
