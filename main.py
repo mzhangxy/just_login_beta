@@ -120,8 +120,6 @@ class JustRunMyAppBot:
                     # 继续你的 turnstile 和提交逻辑...
                 else:
                     raise Exception("所有尝试定位邮箱输入框都失败了，看上面 input 列表！")
-        else:
-            raise Exception("页面根本没有 <input> 元素！很可能被 Cloudflare 拦截或页面没加载完")
 
         # ... 你原来的 turnstile + 提交代码保持不变 ...
 
