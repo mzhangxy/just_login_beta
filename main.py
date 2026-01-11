@@ -17,199 +17,198 @@ class JustRunMyAppBot:
         self.password = os.getenv("USER_PASSWORD")
         self.api_key = os.getenv("TWOCAPTCHA_API_KEY")
         
+        if not all([self.email, self.password, self.api_key]):
+            raise ValueError("缺少必要的环境变量：USER_EMAIL, USER_PASSWORD 或 TWOCAPTCHA_API_KEY")
+        
         self.solver = TwoCaptcha(self.api_key)
         self.driver = self._setup_driver()
-        self.wait = WebDriverWait(self.driver, 35)  # 增加等待时间以应对重定向
+        self.wait = WebDriverWait(self.driver, 40)
 
     def _setup_driver(self):
         options = uc.ChromeOptions()
         
-        # 更强的伪装参数
+        # 有效的反检测参数
         options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_experimental_option("excludeSwitches", ["enable-automation"])
-        options.add_experimental_option('useAutomationExtension', False)
+        options.add_argument('--disable-infobars')
+        options.add_argument('--window-size=1920,1080')
         
         if os.getenv("GITHUB_ACTIONS") == "true":
-            logger.info("GitHub 环境，headless + 额外伪装")
-            options.add_argument('--headless=new')  # 试试 new headless，更像真实浏览器
+            logger.info("GitHub Actions 环境 - 使用 headless=new 模式")
+            options.add_argument('--headless=new')
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')  # 有时有助于
+            options.add_argument('--disable-gpu')
+        else:
+            logger.info("本地环境 - 非 headless 模式")
         
-        # 随机化一点 user-agent（需要 pip install fake-useragent）
+        # 随机化 User-Agent（如果安装了 fake-useragent 更好）
         try:
             from fake_useragent import UserAgent
             ua = UserAgent()
-            options.add_argument(f'--user-agent={ua.random}')
+            random_ua = ua.random
+            options.add_argument(f'--user-agent={random_ua}')
+            logger.info(f"使用随机 User-Agent: {random_ua}")
         except ImportError:
-            options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
+            options.add_argument(
+                '--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                'AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+            )
         
-        options.add_argument('--window-size=1920,1080')
-        
-        # 关键：让 browser 像正常用户一样
+        # 创建 driver
         driver = uc.Chrome(
             options=options,
-            version_main=130,  # 建议锁定一个比较新的稳定版本，根据你的环境调整
-            headless=True if os.getenv("GITHUB_ACTIONS") else False
+            version_main=130,          # 根据你的 runner 环境调整，失败可改为 None 让自动检测
+            headless=bool(os.getenv("GITHUB_ACTIONS"))
         )
         
-        # 额外 JS 隐藏 webdriver 痕迹
-        driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        # 额外隐藏 webdriver 痕迹（推荐使用 CDP）
+        driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
+            "source": """
+                Object.defineProperty(navigator, 'webdriver', { get: () => undefined });
+                Object.defineProperty(navigator, 'languages', { get: () => ['zh-CN', 'zh', 'en-US', 'en'] });
+                Object.defineProperty(navigator, 'plugins', { get: () => [1, 2, 3, 4, 5] });
+            """
+        })
         
         return driver
 
     def login(self):
         try:
+            # Step 1: 首页
             logger.info("Step 1: 打开首页")
             self.driver.get("https://justrunmy.app")
-            time.sleep(3)  # 给首页一点缓冲
+            time.sleep(3)
             self.driver.save_screenshot("debug_1_homepage.png")
-            logger.info(f"首页标题: {self.driver.title}")
+            logger.info(f"首页标题: {self.driver.title.strip()}")
             logger.info(f"首页 URL: {self.driver.current_url}")
-            logger.info(f"首页 source 前200字: {self.driver.page_source[:200]}...")
 
-            # Step 2: 找 Sign in 按钮并点击
-            logger.info("Step 2: 尝试点击 Sign in")
+            # Step 2: 点击 Sign in
+            logger.info("Step 2: 寻找并点击 Sign in")
             try:
                 signin_btn = self.wait.until(EC.element_to_be_clickable((By.LINK_TEXT, "Sign in")))
                 signin_btn.click()
-                logger.info("成功点击 Sign in (用 Link Text)")
+                logger.info("使用 Link Text 成功点击 Sign in")
             except:
-                logger.warning("没找到 Link Text 'Sign in'，尝试 CSS 选择器...")
-                signin_btn = self.wait.until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'a[href*="login"], a[href*="account"], button:contains("Sign in")')))
+                logger.warning("Link Text 'Sign in' 未找到，尝试其他方式...")
+                signin_btn = self.wait.until(EC.element_to_be_clickable(
+                    (By.CSS_SELECTOR, 'a[href*="login"], a[href*="account"], a:contains("Sign"), button:contains("Sign")')
+                ))
                 signin_btn.click()
 
             time.sleep(4)
-            self.driver.save_screenshot("debug_2_after_click_signin.png")
+            self.driver.save_screenshot("debug_2_after_signin_click.png")
 
-            # Step 3: 等登录页出现
-            logger.info("Step 3: 等待 URL 包含 account/login")
+            # Step 3: 等待登录页面
+            logger.info("Step 3: 等待到达登录页面...")
             self.wait.until(EC.url_contains("account/login"))
-            logger.info(f"到达登录页 URL: {self.driver.current_url}")
+            logger.info(f"当前 URL: {self.driver.current_url}")
 
-            # 关键诊断点：打印页面源码 + 找所有 input
-            time.sleep(5)  # 额外等 SPA/JS 加载
-            self.driver.save_screenshot("debug_3_login_page_before_input.png")
-            
-            page_source = self.driver.page_source.lower()
-            logger.info("页面标题: " + self.driver.title)
-            
-            # 检查是否卡在 Cloudflare
-            if "checking your browser" in page_source or "turnstile" in page_source or "cf-browser-verification" in page_source:
-                logger.error("!!! 疑似卡在 Cloudflare 验证页面 !!!")
-                logger.info("页面源码片段: " + page_source[page_source.find("cf-"):page_source.find("cf-")+500])
-            
-            # 尝试切换到可能的 iframe
+            time.sleep(6)  # 给 JS/Cloudflare 更多加载时间
+            self.driver.save_screenshot("debug_3_login_page.png")
+
+            # 检查 Cloudflare 痕迹
+            page_source_lower = self.driver.page_source.lower()
+            if any(x in page_source_lower for x in ["checking your browser", "cf-browser-verification", "turnstile"]):
+                logger.error("!!! 检测到 Cloudflare 验证页面 !!! 很可能被拦截")
+
+            # 尝试处理 iframe
             iframes = self.driver.find_elements(By.TAG_NAME, "iframe")
-            logger.info(f"找到 {len(iframes)} 个 iframe")
-            form_frame = None
-            for idx, iframe in enumerate(iframes):
+            logger.info(f"页面中共找到 {len(iframes)} 个 iframe")
+            in_frame = False
+            for i, iframe in enumerate(iframes):
                 try:
-                    src = iframe.get_attribute("src") or "(无src)"
-                    logger.info(f"iframe {idx+1} src: {src}")
+                    src = iframe.get_attribute("src") or "(无 src)"
+                    logger.info(f"iframe {i+1}: {src}")
                     self.driver.switch_to.frame(iframe)
-                    inputs_in_frame = self.driver.find_elements(By.TAG_NAME, "input")
-                    logger.info(f"  → 该 iframe 内有 {len(inputs_in_frame)} 个 input")
-                    # 如果有 input，就停留在这里操作
-                    if inputs_in_frame:
-                        logger.info("找到表单所在的 iframe！后续操作都在这里执行")
-                        form_frame = iframe
-                        break  # 保持在该 frame 里
+                    if self.driver.find_elements(By.TAG_NAME, "input"):
+                        logger.info("→ 在此 iframe 内找到表单元素！保持在此 frame")
+                        in_frame = True
+                        break
                     self.driver.switch_to.default_content()
                 except:
                     self.driver.switch_to.default_content()
-            
-            # 列出所有可见的 input 元素（超级有用！）
+
+            # 列出所有 input（关键诊断信息）
             inputs = self.driver.find_elements(By.TAG_NAME, "input")
-            logger.info(f"页面中共找到 {len(inputs)} 个 <input> 元素")
-            for i, inp in enumerate(inputs):
+            logger.info(f"当前上下文中共找到 {len(inputs)} 个 <input> 元素")
+            for idx, inp in enumerate(inputs):
                 try:
-                    name = inp.get_attribute("name") or "(无name)"
-                    typ = inp.get_attribute("type") or "(无type)"
-                    id_ = inp.get_attribute("id") or "(无id)"
-                    ph = inp.get_attribute("placeholder") or "(无placeholder)"
-                    visible = inp.is_displayed()
-                    logger.info(f"Input {i+1}: name={name}, type={typ}, id={id_}, placeholder={ph}, visible={visible}")
+                    info = {
+                        "name": inp.get_attribute("name") or "(无)",
+                        "type": inp.get_attribute("type") or "(无)",
+                        "id": inp.get_attribute("id") or "(无)",
+                        "placeholder": inp.get_attribute("placeholder") or "(无)",
+                        "visible": inp.is_displayed()
+                    }
+                    logger.info(f"Input {idx+1}: {info}")
                 except:
                     pass
 
-            # 再检查 cf-turnstile
-            try:
-                cf_container = self.driver.find_element(By.CLASS_NAME, "cf-turnstile")
-                logger.info("找到 cf-turnstile！ sitekey = " + cf_container.get_attribute("data-sitekey"))
-                sitekey = cf_container.get_attribute("data-sitekey")
-            except:
-                logger.warning("没找到 cf-turnstile 容器")
-                sitekey = None  # 如果没有，就跳过
+            # 尝试定位邮箱输入框（多重 fallback）
+            email_selectors = [
+                (By.NAME, "Input.Username"),
+                (By.NAME, "email"),
+                (By.NAME, "username"),
+                (By.CSS_SELECTOR, 'input[type="email"], input[placeholder*="mail" i]'),
+                (By.XPATH, '//input[contains(@type,"email") or contains(@name,"user") or contains(@placeholder,"mail")]')
+            ]
 
-            # 如果到这里还有 input，就尝试用最宽松的方式定位邮箱
-            if inputs:
-                email_input = None
-                for selector in [
-                    (By.NAME, "Input.Username"),
-                    (By.NAME, "email"),
-                    (By.NAME, "username"),
-                    (By.CSS_SELECTOR, 'input[type="email"], input[placeholder*="mail" i], input[name*="user" i]'),
-                    (By.XPATH, '//input[contains(@type,"email") or contains(@name,"user") or contains(@placeholder,"mail")]')
-                ]:
-                    try:
-                        email_input = self.wait.until(EC.visibility_of_element_located(selector))
-                        logger.info(f"成功用 {selector} 找到邮箱输入框！")
-                        break
-                    except:
-                        continue
-                
-                if email_input:
-                    self.driver.execute_script("arguments[0].value = arguments[1];", email_input, self.email)
-                    logger.info("用户名已注入")
-                    
-                    # 密码同理
-                    password_input = None
-                    try:
-                        password_input = self.wait.until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'input[type="password"]')))
-                        self.driver.execute_script("arguments[0].value = arguments[1];", password_input, self.password)
-                        logger.info("密码已注入")
-                    except:
-                        raise Exception("找不到密码输入框！")
-                    
-                    # 处理 Cloudflare Turnstile（如果存在）
-                    if sitekey:
-                        logger.info("正在检测并破解验证码...")
-                        result = self.solver.turnstile(sitekey=sitekey, url=self.driver.current_url)
-                        token = result['code']
-                        
-                        # 注入 Token
-                        self.driver.execute_script(f'document.getElementsByName("cf-turnstile-response")[0].value="{token}";')
-                        logger.info("Token 注入完毕")
-                        time.sleep(1.5)  # 让页面校验 token
-                    else:
-                        logger.info("无 Turnstile，跳过验证码步骤")
-                    
-                    # 提交表单
-                    logger.info("准备提交表单")
-                    try:
-                        submit_btn = self.driver.find_element(By.CSS_SELECTOR, "button[type='submit'], button:contains('SIGN IN')")
-                        self.driver.execute_script("arguments[0].click();", submit_btn)
-                    except:
-                        raise Exception("找不到提交按钮！")
-                    
-                    # 最终验证
-                    self.wait.until(EC.url_contains("/panel"))
-                    logger.info("🎉 登录成功！")
-                else:
-                    raise Exception("所有尝试定位邮箱输入框都失败了，看上面 input 列表！")
-            else:
-                raise Exception("页面根本没有 <input> 元素！很可能被 Cloudflare 拦截或页面没加载完")
-            
-            # 如果在 iframe 中操作完，切换回默认
-            if form_frame:
-                self.driver.switch_to.default_content()
+            email_input = None
+            for by, value in email_selectors:
+                try:
+                    email_input = self.wait.until(EC.visibility_of_element_located((by, value)))
+                    logger.info(f"成功定位邮箱输入框: {by} = {value}")
+                    break
+                except:
+                    continue
+
+            if not email_input:
+                raise Exception("所有邮箱定位方式都失败，请查看上面 input 列表和 debug_3_login_page.png")
+
+            # 输入邮箱 & 密码
+            self.driver.execute_script("arguments[0].value = arguments[1];", email_input, self.email)
+            logger.info("邮箱已注入")
+
+            password_input = self.wait.until(EC.visibility_of_element_located(
+                (By.CSS_SELECTOR, 'input[type="password"]')
+            ))
+            self.driver.execute_script("arguments[0].value = arguments[1];", password_input, self.password)
+            logger.info("密码已注入")
+
+            # 处理 Turnstile
+            try:
+                cf = self.driver.find_element(By.CSS_SELECTOR, ".cf-turnstile, [data-sitekey]")
+                sitekey = cf.get_attribute("data-sitekey")
+                if sitekey:
+                    logger.info(f"检测到 Turnstile，sitekey: {sitekey}")
+                    result = self.solver.turnstile(sitekey=sitekey, url=self.driver.current_url)
+                    token = result['code']
+                    self.driver.execute_script(
+                        f'document.querySelector("[name=\'cf-turnstile-response\']").value = "{token}";'
+                    )
+                    logger.info("Turnstile token 已注入")
+                    time.sleep(2)
+            except:
+                logger.info("未检测到 Turnstile，跳过验证码步骤")
+
+            # 提交
+            submit_btn = self.wait.until(EC.element_to_be_clickable(
+                (By.CSS_SELECTOR, "button[type='submit'], button:contains('SIGN IN'), button:contains('登录')")
+            ))
+            self.driver.execute_script("arguments[0].click();", submit_btn)
+            logger.info("已点击提交按钮")
+
+            # 等待跳转成功
+            self.wait.until(EC.url_contains("/panel"))
+            logger.info("登录成功！当前 URL: " + self.driver.current_url)
+            self.driver.save_screenshot("debug_success.png")
 
         except Exception as e:
-            self.driver.save_screenshot("error_debug_final.png")
-            logger.error(f"❌ 运行失败: {str(e)}")
-            logger.info(f"失败时的 URL: {self.driver.current_url}")
-            logger.info(f"失败时页面标题: {self.driver.title}")
+            self.driver.save_screenshot("error_final.png")
+            logger.error(f"执行失败: {str(e)}")
+            logger.info(f"失败时 URL: {self.driver.current_url}")
+            logger.info(f"失败时标题: {self.driver.title}")
+            raise
         finally:
             self.driver.quit()
 
