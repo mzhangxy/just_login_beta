@@ -5,6 +5,9 @@ on:
   schedule:
     - cron: '0 0 */2 * *'
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -35,6 +38,15 @@ jobs:
         TWOCAPTCHA_API_KEY: ${{ secrets.TWOCAPTCHA_API_KEY }}
         GITHUB_ACTIONS: "true"
       run: python main.py
+
+    - name: Commit and push updated cookies
+      if: always()  # 即使失败也运行
+      run: |
+        git config --global user.name "GitHub Actions"
+        git config --global user.email "actions@github.com"
+        git add cookies.json
+        git commit -m "Update cookies from bot run" || echo "No changes to commit"
+        git push
 
     - name: Upload Debug Files
       if: always()
