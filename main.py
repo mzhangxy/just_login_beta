@@ -248,8 +248,8 @@ class JustRunMyAppLoginBot:
             time.sleep(2)  # 保留少量缓冲，等待 JS 渲染
             self.driver.save_screenshot("debug_6_app_detail.png")
 
-            # === 新增：第9.5步 - 检测运行状态并处理启动 ===
-            logger.info("Step 9.5: 检查应用运行状态")
+            # 10. 检测运行状态并处理启动 ===
+            logger.info("Step 10: 检查应用运行状态")
 
             # 更宽松的 Running 检测（不区分大小写，包含 running/running/等）
             running_indicators = [
@@ -310,8 +310,8 @@ class JustRunMyAppLoginBot:
             else:
                 logger.info("应用已在 Running 状态，无需启动")
 
-            # 10. 检查并点击 Reset Timer
-            logger.info("Step 10: 寻找并点击 Reset Timer")
+            # 11. 检查并点击 Reset Timer
+            logger.info("Step 11: 寻找并点击 Reset Timer")
             reset_xpath = '//button[contains(., "Reset Timer")]'
             
             reset_btn = self.wait.until(EC.presence_of_element_located((By.XPATH, reset_xpath)))
