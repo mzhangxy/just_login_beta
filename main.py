@@ -128,7 +128,9 @@ class JustRunMyAppBot:
             if not self.load_cookies():
                 logger.info("Step 1: 启动传统登录流程 (User/Pass + Turnstile)")
                 self.driver.get("https://justrunmy.app/account/login")
-                time.sleep(3)
+                
+                logger.info("等待页面加载与人机验证环境...")
+                time.sleep(15)
                 
                 # 填写账号密码
                 email_input = self.wait.until(EC.visibility_of_element_located((By.NAME, "Email")))
