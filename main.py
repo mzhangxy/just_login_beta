@@ -158,6 +158,68 @@ class JustRunMyAppLoginBot:
             time.sleep(2)  # 保留少量缓冲，等待 JS 渲染
             self.driver.save_screenshot("debug_6_app_detail.png")
 
+            # === 新增：第9.5步 - 检测运行状态并处理启动 ===
+            logger.info("Step 9.5: 检查应用运行状态")
+
+            # 更宽松的 Running 检测（不区分大小写，包含 running/running/等）
+            running_indicators = [
+                (By.XPATH, "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'running')]"),
+                (By.XPATH, "//*[contains(@class, 'status') or contains(@class, 'badge') or contains(@class, 'label')][contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'running')]"),
+            ]
+
+            is_running = False
+            for by, value in running_indicators:
+                try:
+                    elem = self.wait.until(EC.presence_of_element_located((by, value)))
+                    logger.info(f"检测到 Running 状态 (使用选择器: {by} = {value})")
+                    is_running = True
+                    break
+                except TimeoutException:
+                    continue
+
+            if not is_running:
+                logger.info("未检测到 Running 状态，尝试启动应用...")
+                
+                # 尝试多种 Start 按钮定位方式（优先级从高到低）
+                start_candidates = [
+                    (By.XPATH, "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start')]"),
+                    (By.XPATH, "//button[contains(., 'Start') or contains(., 'start')]"),
+                    (By.CSS_SELECTOR, "button[class*='start'], button[class*='launch'], button[class*='run']"),
+                    (By.XPATH, "//*[contains(@aria-label, 'start') or contains(@title, 'start') or contains(@class, 'start')]//button"),
+                ]
+
+                start_btn = None
+                for by, value in start_candidates:
+                    try:
+                        start_btn = self.wait.until(EC.element_to_be_clickable((by, value)))
+                        logger.info(f"找到 Start 按钮，使用选择器: {by} = {value}")
+                        break
+                    except TimeoutException:
+                        continue
+
+                if start_btn:
+                    self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", start_btn)
+                    time.sleep(0.6)
+                    self.driver.execute_script("arguments[0].click();", start_btn)
+                    logger.info("已点击 Start 按钮")
+
+                    # 等待 Running 出现（最长等待 90 秒）
+                    self.wait.until(lambda driver: any(
+                        driver.find_elements(By.XPATH, xp) for xp in [
+                            "//*[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'running')]",
+                            "//*[contains(@class, 'status')][contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'running')]"
+                        ]
+                    ), message="等待应用启动到 Running 状态超时（90秒）")
+                    
+                    logger.info("应用已启动，检测到 Running 状态")
+                    time.sleep(1.5)  # 轻微缓冲
+                    self.driver.save_screenshot("debug_6.5_started.png")
+                else:
+                    raise Exception("未找到 Start 按钮，且应用不在 Running 状态")
+
+            else:
+                logger.info("应用已在 Running 状态，无需启动")
+
             # 10. 检查并点击 Reset Timer
             logger.info("Step 10: 寻找并点击 Reset Timer")
             reset_xpath = '//button[contains(., "Reset Timer")]'
@@ -186,7 +248,7 @@ class JustRunMyAppLoginBot:
                 self.driver.quit()
             except:
                 pass
-
+    
 if __name__ == "__main__":
     bot = JustRunMyAppLoginBot()
     bot.run()
