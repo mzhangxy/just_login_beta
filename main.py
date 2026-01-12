@@ -180,28 +180,28 @@ class JustRunMyAppLoginBot:
             if not is_running:
                 logger.info("未检测到 Running 状态，尝试启动应用...")
                 
-                # 尝试多种 Start 按钮定位方式（优先级从高到低）
-                start_candidates = [
-                    (By.XPATH, "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'start')]"),
-                    (By.XPATH, "//button[contains(., 'Start') or contains(., 'start')]"),
-                    (By.CSS_SELECTOR, "button[class*='start'], button[class*='launch'], button[class*='run']"),
-                    (By.XPATH, "//*[contains(@aria-label, 'start') or contains(@title, 'start') or contains(@class, 'start')]//button"),
+                # 尝试多种 Restart 按钮定位方式（优先级从高到低）
+                restart_candidates = [
+                    (By.XPATH, "//button[contains(translate(text(), 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz'), 'restart')]"),
+                    (By.XPATH, "//button[contains(., 'Restart') or contains(., 'restart')]"),
+                    (By.CSS_SELECTOR, "button[class*='restart'], button[class*='launch'], button[class*='run']"),
+                    (By.XPATH, "//*[contains(@aria-label, 'restart') or contains(@title, 'restart') or contains(@class, 'restart')]//button"),
                 ]
 
-                start_btn = None
-                for by, value in start_candidates:
+                restart_btn = None
+                for by, value in restart_candidates:
                     try:
-                        start_btn = self.wait.until(EC.element_to_be_clickable((by, value)))
-                        logger.info(f"找到 Start 按钮，使用选择器: {by} = {value}")
+                        restart_btn = self.wait.until(EC.element_to_be_clickable((by, value)))
+                        logger.info(f"找到 Restart 按钮，使用选择器: {by} = {value}")
                         break
                     except TimeoutException:
                         continue
 
-                if start_btn:
+                if restart_btn:
                     self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", start_btn)
                     time.sleep(0.6)
-                    self.driver.execute_script("arguments[0].click();", start_btn)
-                    logger.info("已点击 Start 按钮")
+                    self.driver.execute_script("arguments[0].click();", restart_btn)
+                    logger.info("已点击 Restart 按钮")
 
                     # 等待 Running 出现（最长等待 90 秒）
                     self.wait.until(lambda driver: any(
@@ -213,9 +213,9 @@ class JustRunMyAppLoginBot:
                     
                     logger.info("应用已启动，检测到 Running 状态")
                     time.sleep(1.5)  # 轻微缓冲
-                    self.driver.save_screenshot("debug_6.5_started.png")
+                    self.driver.save_screenshot("debug_6.5_restarted.png")
                 else:
-                    raise Exception("未找到 Start 按钮，且应用不在 Running 状态")
+                    raise Exception("未找到 Restart 按钮，且应用不在 Running 状态")
 
             else:
                 logger.info("应用已在 Running 状态，无需启动")
