@@ -69,4 +69,4 @@ jobs:
         name: debug-files-${{ github.run_id }}
         path: |
           *debug*.png
-        retention-days: 7
+        retention-days: 2
