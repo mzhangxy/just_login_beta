@@ -1,0 +1,73 @@
+name: Auto Login Bot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 */2 * *'   # 每2天运行一次
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Cache pip packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: ${{ runner.os }}-pip-
+
+    - name: Install Python dependencies
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+        pip install \
+          selenium==4.25.* \
+          undetected-chromedriver==3.5.* \
+          2captcha-python \
+          fake-useragent
+
+    - name: Setup Chrome
+      uses: browser-actions/setup-chrome@v1
+      with:
+        chrome-version: stable
+        install-dependencies: true
+        install-chromedriver: false
+
+    - name: Run Python Script
+      env:
+        USER_EMAIL: ${{ secrets.USER_EMAIL }}
+        USER_PASSWORD: ${{ secrets.USER_PASSWORD }}
+        TWOCAPTCHA_API_KEY: ${{ secrets.TWOCAPTCHA_API_KEY }}
+        GITHUB_ACTIONS: "true"
+      run: python main.py
+
+    - name: Commit and push updated cookies.json (if changed)
+      if: always() # 只要脚本运行过，就尝试同步最新的关键 cookies
+      run: |
+        git config --global user.name "GitHub Actions Bot"
+        git config --global user.email "actions@github.com"
+        git add cookies.json || true
+        git commit -m "Update cookies [$(date '+%Y-%m-%d %H:%M UTC')]" || echo "No changes to commit"
+        git push origin HEAD:${{ github.ref_name }} || echo "Push skipped"
+
+    - name: Upload Error Artifacts (Screenshots)
+      if: failure() # 关键修改：只有在脚本报错（失败）时才上传截图
+      uses: actions/upload-artifact@v4
+      with:
+        name: error-debug-files-${{ github.run_id }}
+        path: |
+          error_*.png
+          debug_*.png
+        retention-days: 7
