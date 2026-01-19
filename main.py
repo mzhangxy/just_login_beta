@@ -2,6 +2,7 @@ import os
 import time
 import json
 import logging
+import requests
 import undetected_chromedriver as uc
 from twocaptcha import TwoCaptcha
 from selenium.webdriver.common.by import By
@@ -25,6 +26,9 @@ class JustRunMyAppLoginBot:
         self.email = os.getenv("USER_EMAIL")
         self.password = os.getenv("USER_PASSWORD")
         self.api_key = os.getenv("TWOCAPTCHA_API_KEY")
+        self.tg_token = os.getenv("TELEGRAM_BOT_TOKEN")
+        self.tg_chat_id = os.getenv("TELEGRAM_CHAT_ID")
+        
         self.app_id = "2126"
         
         if not all([self.email, self.password, self.api_key]):
@@ -35,6 +39,27 @@ class JustRunMyAppLoginBot:
         self.wait = WebDriverWait(self.driver, 45)
         self.saved_cookies = self._load_saved_cookies()  # 预加载保存的 cookies
 
+    def send_telegram_message(self, message):
+        """发送 Telegram 通知的辅助函数"""
+        if not self.tg_token or not self.tg_chat_id:
+            logger.warning("未配置 Telegram Token 或 Chat ID，跳过通知。")
+            return
+
+        url = f"https://api.telegram.org/bot{self.tg_token}/sendMessage"
+        payload = {
+            "chat_id": self.tg_chat_id,
+            "text": f"🤖 **JustRunMyApp Bot 报告**\n\n{message}",
+            "parse_mode": "Markdown"
+        }
+        try:
+            response = requests.post(url, json=payload, timeout=10)
+            if response.status_code == 200:
+                logger.info("Telegram 通知发送成功")
+            else:
+                logger.error(f"Telegram 通知发送失败: {response.text}")
+        except Exception as e:
+            logger.error(f"发送 Telegram 消息时出错: {str(e)}")
+    
     def _init_driver(self):
         options = uc.ChromeOptions()
         options.add_argument('--disable-blink-features=AutomationControlled')
@@ -321,12 +346,16 @@ class JustRunMyAppLoginBot:
             self.driver.execute_script("arguments[0].click();", reset_btn)
             logger.info("已点击 Reset Timer 按钮")
             
+            self.send_telegram_message(f"🚀 续期流程成功完成！\n应用 ID: `{self.app_id}`\n状态: `已重置 Timer`")
             time.sleep(2.5)
             self.driver.save_screenshot("debug_7_done.png")
-            logger.info("续费/重置流程完成")
+            logger.info("续期/重置流程完成")
 
         except Exception as e:
             timestamp = time.strftime("%Y%m%d_%H%M%S")
+            error_msg = f"❌ 任务失败！\n错误信息: `{str(e)[:100]}`"
+            self.send_telegram_message(error_msg)
+            
             try:
                 self.driver.save_screenshot(f"error_{timestamp}.png")
             except:
