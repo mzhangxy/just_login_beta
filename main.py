@@ -71,8 +71,15 @@ class JustRunMyAppLoginBot:
             options.add_argument('--no-sandbox')
             options.add_argument('--disable-dev-shm-usage')
             options.add_argument('--disable-gpu')
-        
-        driver = uc.Chrome(options=options)
+
+            # 修改：强制指定主版本号为 143，以匹配 GitHub Actions 环境中的浏览器
+            try:
+                driver = uc.Chrome(options=options, version_main=143)
+            except Exception as e:
+                logger.warning(f"指定版本 143 启动失败，尝试默认启动: {e}")
+                driver = uc.Chrome(options=options)
+        else:
+            driver = uc.Chrome(options=options)
         
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
             "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
