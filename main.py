@@ -352,6 +352,27 @@ class JustRunMyAppLoginBot:
             
             self.driver.execute_script("arguments[0].click();", reset_btn)
             logger.info("已点击 Reset Timer 按钮")
+
+            # === 新增：处理弹窗中的 Just Reset 按钮 ===
+            logger.info("正在识别弹窗中的 Just Reset 按钮...")
+            try:
+                # 1. 定义 Just Reset 按钮的定位器 (使用包含文本的 XPath，最稳定)
+                just_reset_xpath = '//button[contains(., "Just Reset")]'
+                
+                # 2. 等待按钮出现并可点击 (由于有动画，建议等待时间设为 10s)
+                just_reset_btn = WebDriverWait(self.driver, 10).until(
+                    EC.element_to_be_clickable((By.XPATH, just_reset_xpath))
+                )
+                
+                # 3. 滚动并点击 (使用 JS 点击以规避可能的遮罩层问题)
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", just_reset_btn)
+                time.sleep(0.5)
+                self.driver.execute_script("arguments[0].click();", just_reset_btn)
+                logger.info("已点击弹窗中的 Just Reset 按钮")
+                
+            except TimeoutException:
+                logger.warning("未检测到 Just Reset 弹窗，可能 Reset 已直接生效或页面逻辑变化")
+            # ========================================
             
             self.send_telegram_message(f"🚀 续期流程成功完成！\n应用 ID: `{self.app_id}`\n状态: `已重置 Timer`")
             time.sleep(2.5)
