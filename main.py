@@ -359,8 +359,8 @@ class JustRunMyAppLoginBot:
                 # 1. 定义 Just Reset 按钮的定位器 (使用包含文本的 XPath，最稳定)
                 just_reset_xpath = '//button[contains(., "Just Reset")]'
                 
-                # 2. 等待按钮出现并可点击 (由于有动画，建议等待时间设为 10s)
-                just_reset_btn = WebDriverWait(self.driver, 10).until(
+                # 2. 等待按钮出现并可点击 (由于有动画，等待时间设为 30s)
+                just_reset_btn = WebDriverWait(self.driver, 30).until(
                     EC.element_to_be_clickable((By.XPATH, just_reset_xpath))
                 )
                 
