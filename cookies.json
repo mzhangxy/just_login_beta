@@ -1,1 +1,29 @@
-[]
+[
+    {
+        "domain": "justrunmy.app",
+        "httpOnly": false,
+        "name": "idsrv.session",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "76370E84093DE26A7803AB9C8B8E6F77"
+    },
+    {
+        "domain": "justrunmy.app",
+        "httpOnly": true,
+        "name": ".AspNetCore.Antiforgery.NCGjD_ZE8wU",
+        "path": "/",
+        "sameSite": "Strict",
+        "secure": false,
+        "value": "CfDJ8OSdq0H9d59DhJPlCv_ciG0JeqqbVIB9SIkyjvZAj9jFL8hASXTVNqKD3drxpeDZ0EbZMUSbVytK8GGgrL5JftxQA6g5dYfapQZ4sr6__bD6irfiojWabmru3C1lcRHHfvy8O_y9QWUwR2arc25I8XY"
+    },
+    {
+        "domain": "justrunmy.app",
+        "httpOnly": true,
+        "name": ".AspNetCore.Identity.Application",
+        "path": "/",
+        "sameSite": "Lax",
+        "secure": true,
+        "value": "CfDJ8OSdq0H9d59DhJPlCv_ciG0c53yQen1hTZnxJ7-OZifWVeoccMlLR5Delr8VNVRflgHz7Hgo7C3tIh-gv3ZH1a_WEevfwfl5VTz7lKWiL2xXFufVTDF1Q3oOnahtxn6RDoA3rp51H2Ij3D7yf0jjDXnYazTtv6lvJ-nI1ayq7xcZgyezqS6VxcURe7T6sirEyGB_AKF--fncmdSdqPRTj_oVYYXjVlu-5xcVDrAFyq96USceVxPL4zLoSjFhaZ3eVd6ZSQKLQpBpU7kgXIXlQMP4_0LI2XPEGWM15kOiFb_bDC7ofiy1_Fw9eanOUItWCIEeFGsSM-j_bvW9OM8QwVOQoNBLEVzL4RixmWsGgRtkjZCQBAMiSjwEzfB--TNTzC4zQH_Lo05bqXNJ33yA0O4gdM3Y683QlNUOnNCkXFJsCunY4DXBEoneNJjR8HjdFP55CWsWCnTmRi9BOJsAGbGm3WQESgT77kxrTtOvwZirSStWwFMSSutC2GXhv6QOqp_PzzoLYoqJ--R1AxC4aXtxNdFGQUmiKW3g9gFIkp6afj2XVk6yS7Sy-pzh5KY6GqZIA7gGz41fRPeoVhhAvfl7lQFFZnUlfC_uH5ytHRTDel1jdYguKPyvyB8fK6WFcmoxPzw6vxBzp17VfM-1xhCS1P2FHC6jGcTLk3sjxAlVr4v00cz949w_9FhhgwhLc-LTmxK_8-TcQbnQDFAdB54DtCkXE_arMC176DQG2l-xcGvYBveLp0AGEYbNABmlZ0DK1dByrRzqD0pS37gTeRSdQkgTsiGTT_PGI72qLTFAzEFi1vI1LER4uJarbwXqgpeSzJlZTGo-f8Hoj42p0u-UzqeRtZ8bG-gwVSak82AwiCW-Y-AR9GBVME3HTvmKGuvpw_9OzUx55Ui-jroJ5-i7tYE56YPADaauy8b4hdFsO4gMSdD6ukg1SSmVevTf-LWqwNPrxs3Yptb5L80ZVqwaSteaoIm419EkdqXS-Fvn75HU2t1S7rz5bawIcD0dTaq11dwdIsYgEAaAHGP7duU"
+    }
+]
