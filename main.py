@@ -61,32 +61,44 @@ class JustRunMyAppLoginBot:
             logger.error(f"发送 Telegram 消息时出错: {str(e)}")
     
     def _init_driver(self):
-        options = uc.ChromeOptions()
-        options.add_argument('--disable-blink-features=AutomationControlled')
-        options.add_argument('--window-size=1920,1080')
-        
-        if os.getenv("GITHUB_ACTIONS") == "true":
-            logger.info("运行在 GitHub Actions，使用 headless=new")
-            options.add_argument('--headless=new')
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-gpu')
+        # 封装 Options 生成逻辑，防止复用报错
+        def get_options():
+            opts = uc.ChromeOptions()
+            opts.add_argument('--disable-blink-features=AutomationControlled')
+            opts.add_argument('--window-size=1920,1080')
+            
+            if os.getenv("GITHUB_ACTIONS") == "true":
+                logger.info("运行在 GitHub Actions，使用 headless=new")
+                opts.add_argument('--headless=new')
+                opts.add_argument('--no-sandbox')
+                opts.add_argument('--disable-dev-shm-usage')
+                opts.add_argument('--disable-gpu')
+            return opts
 
-            # 修改：强制指定主版本号为 143，以匹配 GitHub Actions 环境中的浏览器
+        driver = None
+        # 尝试自动匹配版本（通常最稳妥）
+        try:
+            logger.info("尝试自动匹配驱动版本启动...")
+            driver = uc.Chrome(options=get_options())
+        except Exception as e:
+            logger.warning(f"自动匹配启动失败: {e}")
+            
+            # 失败重试逻辑：显式指定版本（根据日志目前是 145）
+            # 注意：这里必须再次调用 get_options() 生成新的对象
             try:
-                driver = uc.Chrome(options=options, version_main=143)
-            except Exception as e:
-                logger.warning(f"指定版本 143 启动失败，尝试默认启动: {e}")
-                driver = uc.Chrome(options=options)
-        else:
-            driver = uc.Chrome(options=options)
-        
+                logger.info("尝试指定 version_main=145 启动...")
+                driver = uc.Chrome(options=get_options(), version_main=145)
+            except Exception as e2:
+                logger.error(f"指定版本启动也失败: {e2}")
+                raise e2
+
+        # 防止 WebDriver 检测
         driver.execute_cdp_cmd("Page.addScriptToEvaluateOnNewDocument", {
             "source": "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
         })
         
         return driver
-
+    
     def _load_saved_cookies(self):
         """加载保存的 cookies 文件"""
         if os.path.exists(COOKIES_FILE):
