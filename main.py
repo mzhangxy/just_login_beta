@@ -83,11 +83,11 @@ class JustRunMyAppLoginBot:
         except Exception as e:
             logger.warning(f"自动匹配启动失败: {e}")
             
-            # 失败重试逻辑：显式指定版本（根据日志目前是 145）
+            # 失败重试逻辑：显式指定版本（根据日志目前是 144）
             # 注意：这里必须再次调用 get_options() 生成新的对象
             try:
-                logger.info("尝试指定 version_main=145 启动...")
-                driver = uc.Chrome(options=get_options(), version_main=145)
+                logger.info("尝试指定 version_main=144 启动...")
+                driver = uc.Chrome(options=get_options(), version_main=144)
             except Exception as e2:
                 logger.error(f"指定版本启动也失败: {e2}")
                 raise e2
