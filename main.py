@@ -115,11 +115,14 @@ class JustRunMyAppLoginBot:
 
     def _save_cookies(self, new_cookies):
         """保存新的 cookies 到文件"""
+        # [优化] 强制在保存前过滤，确保写入文件的永远是精简后的数据
+        # 即使外部传入了包含垃圾广告的 cookie，这里也会把它洗干净
+        filtered_cookies = self._filter_essential_cookies(new_cookies)
+        
         try:
             with open(COOKIES_FILE, 'w') as f:
-                json.dump(new_cookies, f, indent=4)
-            logger.info(f"已更新 cookies 到 {COOKIES_FILE}")
-            # 在 GitHub Actions 中，需要额外步骤 commit/push（见 README 说明）
+                json.dump(filtered_cookies, f, indent=4)
+            logger.info(f"已更新 cookies 到 {COOKIES_FILE} (精简后 {len(filtered_cookies)} 个)")
         except Exception as e:
             logger.error(f"保存 cookies 失败: {str(e)}")
 
