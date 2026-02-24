@@ -111,16 +111,77 @@ class JustRunMyAppLoginBot:
         except Exception as e:
             logger.error(f"保存 cookies 失败: {str(e)}")
 
-    def _cookies_equal(self, cookies1, cookies2):
-        """比较两个 cookies 列表是否本质相同（忽略 expires/sameSite 等动态字段，只比 name/value/domain/path）"""
-        if not cookies1 or not cookies2:
-            return False
-        def normalize_cookie(c):
-            return {k: v for k, v in c.items() if k in ['name', 'value', 'domain', 'path']}
+    def _filter_essential_cookies(self, cookies):
+        """
+        过滤函数：只保留登录必需的核心 Cookie。
+        """
+        if not cookies:
+            return []
+            
+        # 定义必需的 Cookie 名称集合 (精确匹配)
+        essential_exact_names = {
+            ".AspNetCore.Identity.Application", # 核心身份凭证
+            "idsrv.session"                     # 会话状态
+        }
         
-        set1 = {json.dumps(normalize_cookie(c), sort_keys=True) for c in cookies1}
-        set2 = {json.dumps(normalize_cookie(c), sort_keys=True) for c in cookies2}
+        filtered = []
+        for cookie in cookies:
+            name = cookie.get('name', '')
+            
+            # 1. 精确匹配核心 Cookie
+            if name in essential_exact_names:
+                filtered.append(cookie)
+                continue
+                
+            # 2. 前缀匹配 (针对动态后缀的 Cookie)
+            # 防伪造 Token，通常以 .AspNetCore.Antiforgery 开头
+            if name.startswith(".AspNetCore.Antiforgery"):
+                filtered.append(cookie)
+                continue
+                
+        return filtered
+
+    def _cookies_equal(self, cookies1, cookies2):
+        """
+        [修改] 比较两个 cookies 列表。
+        只比较 name 和 value，忽略过期时间等动态字段。
+        """
+        if cookies1 is None: cookies1 = []
+        if cookies2 is None: cookies2 = []
+        
+        # 如果过滤后的数量都不一致，肯定不同
+        if len(cookies1) != len(cookies2):
+            return False
+            
+        def get_cookie_signature(c):
+            # 只比较 名字 和 值
+            return (c.get('name'), c.get('value'))
+        
+        set1 = {get_cookie_signature(c) for c in cookies1}
+        set2 = {get_cookie_signature(c) for c in cookies2}
+        
         return set1 == set2
+
+    def _check_and_update_cookies(self):
+        """
+        [修改] 登录后检查当前 cookies，只提取核心 Cookie 进行比对和保存。
+        """
+        # 1. 获取当前浏览器所有 Cookie
+        all_cookies = self.driver.get_cookies()
+        
+        # 2. 【关键步骤】只提取核心 Cookie
+        current_essential_cookies = self._filter_essential_cookies(all_cookies)
+        
+        # 3. 打印调试信息
+        logger.info(f"Cookie 过滤: 总数 {len(all_cookies)} -> 核心数 {len(current_essential_cookies)}")
+        
+        # 4. 与本地保存的进行比对
+        if not self._cookies_equal(current_essential_cookies, self.saved_cookies):
+            logger.info("核心 cookies 已变更，更新保存...")
+            self._save_cookies(current_essential_cookies)
+            self.saved_cookies = current_essential_cookies
+        else:
+            logger.info("核心 cookies 无变更，跳过更新")
 
     def login_with_retry(self, max_attempts=3):
         attempt = 1
