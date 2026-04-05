@@ -1,15 +1,6 @@
 [
     {
         "domain": ".justrunmy.app",
-        "httpOnly": true,
-        "name": ".AspNetCore.Identity.Application",
-        "path": "/",
-        "sameSite": "Lax",
-        "secure": true,
-        "value": "CfDJ8B89LTz2av5FgehSkt9B36C7KPNr-ujsz02NxNHZPdRO3mvjXlzNPbFdmt_QDRx4_sKMWVFLvsDg2qENOppXZ19b95eDiZXh6HLpYFL4EG81-X5Waqg_9b15NKKcjzxKJ-el9JdGRC61kHqrq2hC6mYYzeYzRkeptAj1j9_k2vZvpxyd5FsIkWG4iaTOXuiGXWSG-Hd6CvEJt6hNIDN62IIrZ0qDzs928uoSpB1JOF0k09ulKRDt4KPr-jSzqmoaprzT_t82BKaEiEzXn9qEk2uiJHbOsZGyTnwgWx3yihypcFirSsCr7M8AaSRImfXnmnQqZmK9d8HcNDs-RiNMueKaPgwK6Wae4MT3ObS3rRPSl5ql_C1NwCQ82427gyNUzMy9ZFQ56OcaZNZaOdYGImUVvm747lyOiWrkxMuYR_BrSMbX27pgA6j42LAQgDd1HfhMkdubxNI2wv34YdEKhugPmHiUaIds7IaXJaySauHSC_A3iqO4rz8HZRMZFH_wWUQCXwzIqqtiakjykzJUFIzYcXelCpXatPZOZJC5O2LrLGWsZyXojEI-ePxGNtzvMhx5XOLEl-9yZEw_rf86_jp7D4H9at7GBKLfw-XV6ZEdO_oCLmDLYN5X4OOy-3jIuYqaxWgtrkXYIoS4te7_R3eYRoc5wjfzeAERdUIkQ93ilovwAw6mEHgfjlsl0NJZALlD7laFA0Pn1kmqSPKz58JJwgwOjTwegovW4jK-4cxZuIn_T2nJOh4cpMjYk111kFCB5hieYp3IrUuqXT2EWusy6RunlHxbrRxFs7_9c65AAlkRauSlzXP0xjKi378Cu-MicZvrOe-_p1d2I7bWNt9Rk1ir5I6SXOxU1oBX1smryH9VBpULmHiDlcXhkFnffmpm9PtgsU4y6z9TsOhZ9sVZYTvcoQZ-WTq2S11OBTl4MxZTI2doM0su87UQECib0ysHh8m8iuiRzYfYYk034Wx4Z8-1Yg1iqhN21v9_q7UiQ5e0S3W-qQTyTtJPTemk5k69EYzQ9LWNb0QPLUSALwE"
-    },
-    {
-        "domain": ".justrunmy.app",
         "httpOnly": false,
         "name": "idsrv.session",
         "path": "/",
@@ -20,11 +11,11 @@
     {
         "domain": ".justrunmy.app",
         "httpOnly": true,
-        "name": ".AspNetCore.Antiforgery.NCGjD_ZE8wU",
+        "name": ".AspNetCore.Identity.Application",
         "path": "/",
-        "sameSite": "Strict",
+        "sameSite": "Lax",
         "secure": true,
-        "value": "CfDJ8OSdq0H9d59DhJPlCv_ciG0JeqqbVIB9SIkyjvZAj9jFL8hASXTVNqKD3drxpeDZ0EbZMUSbVytK8GGgrL5JftxQA6g5dYfapQZ4sr6__bD6irfiojWabmru3C1lcRHHfvy8O_y9QWUwR2arc25I8XY"
+        "value": "CfDJ8B89LTz2av5FgehSkt9B36ALtZ3g613oYkTxGLBBFYGNm6A6yQQfdP85sYAyVr9yARo1_Vy9SCzvVAlbJfSIrUJJY9Bt-KAlzxoCN0PCCQkr_11Ntg48U3PIv6wYkpCejyJLzpoC0TkyvyJ4yTPii6yblceQGwV5ts0wM-8pyDjq-JqR7VbYsyp4kvBsfxcupnMBXOmkTDfAGqgT84e7cobgLgGxvahIXSZQiOv5fBODq01C-MviDuJRYRfvxPcQM3emUb4t_UGLqocDvNNeEyiYY8om3BBLxIgnJEZTYvGJOGdU4SDbgDSF92P_V0yGw-dk21TZOwBYOfltK0wyshGTihvCsSD8EvpaTZmXTiB6xjKH6ulwYHd_T2nstyuiEbzq6OM6XQQOO2SSAAQXcCQ0HO7MxPABpLE2-8fdEGWB0pr7Fkyl7JoQ67cG93rC045tYS3W-dcjDokucz5gzAfvqn25EzBZvw0bf0St_XUch366t5gM_C2nAEVLHiMbXNEbGWHc4FwsHoj4wzLcvCeGmyNs_vAN1-giUH1nZEMDbiA1Ib32fq8JeQ9FkXwaZYE4zA4RXDk9oxA_UApXf1vkycllN8YRjcbZKfA3gUhcCn7dIEGh3QahoxioFbSt-tEhYQChUW0AaotNy_OXAgNEjDRrF-LMAPSKCfcF4Cr2JuK_zw9b1Px5qphuhtnE0GoUKUIZVL0IIqB1Sm4TV94G0_PVwB3tMSCPBM4JEko2ZOofOZOQ62DkfAOS5Sb1xLkoSWNNXNjnIHamzgvXWrCShXnoK70ABSG6MmQebaRySdCHXTAK4A5Lzwobtz-g9BSBn5vAA-S_FbKRyLtBXaqgdTbWPtsbMa72qQ7W3fmxdeVWCzZnaNutSMqYJnNfHFpcoXZ7xNn9WOQ9IT_iody-hyYBUQMHERDNc5eF2mCEUWvPErzDiYb0WtxpSDt8XPM_dJ9pTtmnHTOd-u8oQ15ezeMpTYSEtdndE3q29I5fRsiNauBiNRUuOq-Q1AvmVEkCmmxs2GM3EMGUlior98c"
     },
     {
         "domain": "justrunmy.app",
@@ -33,6 +24,15 @@
         "path": "/",
         "sameSite": "Lax",
         "secure": true,
-        "value": "CfDJ8B89LTz2av5FgehSkt9B36ALtZ3g613oYkTxGLBBFYGNm6A6yQQfdP85sYAyVr9yARo1_Vy9SCzvVAlbJfSIrUJJY9Bt-KAlzxoCN0PCCQkr_11Ntg48U3PIv6wYkpCejyJLzpoC0TkyvyJ4yTPii6yblceQGwV5ts0wM-8pyDjq-JqR7VbYsyp4kvBsfxcupnMBXOmkTDfAGqgT84e7cobgLgGxvahIXSZQiOv5fBODq01C-MviDuJRYRfvxPcQM3emUb4t_UGLqocDvNNeEyiYY8om3BBLxIgnJEZTYvGJOGdU4SDbgDSF92P_V0yGw-dk21TZOwBYOfltK0wyshGTihvCsSD8EvpaTZmXTiB6xjKH6ulwYHd_T2nstyuiEbzq6OM6XQQOO2SSAAQXcCQ0HO7MxPABpLE2-8fdEGWB0pr7Fkyl7JoQ67cG93rC045tYS3W-dcjDokucz5gzAfvqn25EzBZvw0bf0St_XUch366t5gM_C2nAEVLHiMbXNEbGWHc4FwsHoj4wzLcvCeGmyNs_vAN1-giUH1nZEMDbiA1Ib32fq8JeQ9FkXwaZYE4zA4RXDk9oxA_UApXf1vkycllN8YRjcbZKfA3gUhcCn7dIEGh3QahoxioFbSt-tEhYQChUW0AaotNy_OXAgNEjDRrF-LMAPSKCfcF4Cr2JuK_zw9b1Px5qphuhtnE0GoUKUIZVL0IIqB1Sm4TV94G0_PVwB3tMSCPBM4JEko2ZOofOZOQ62DkfAOS5Sb1xLkoSWNNXNjnIHamzgvXWrCShXnoK70ABSG6MmQebaRySdCHXTAK4A5Lzwobtz-g9BSBn5vAA-S_FbKRyLtBXaqgdTbWPtsbMa72qQ7W3fmxdeVWCzZnaNutSMqYJnNfHFpcoXZ7xNn9WOQ9IT_iody-hyYBUQMHERDNc5eF2mCEUWvPErzDiYb0WtxpSDt8XPM_dJ9pTtmnHTOd-u8oQ15ezeMpTYSEtdndE3q29I5fRsiNauBiNRUuOq-Q1AvmVEkCmmxs2GM3EMGUlior98c"
+        "value": "CfDJ8B89LTz2av5FgehSkt9B36BqYWfn0ho5T6UqSOtMpcpf2oEmJYkDqz9QDicx-pUVZlt5PHrouY_TIbdnoILC1oMQjIfxY-MewDafgWS39rLC3iSUy6bZTum2u4q9QNA9xN2C6D5z28NnT0_VhNX5sr3WjI3H-Uy4IMQ7K0VkddzeBhNTgu-6r0cVS6slyIIv8QYZJz7MHVtBumYJwqK0aT73tloEgp7FQte9slLpvYJ-TwzyUnzQ_5jis6tYdFaMxqDn4rjfey5tOJ1MqceHi6U5X7zfjofBt_phnWKSjB7Ev0OBpdBHlxmX8xlT_PLsfVuiqCiaMJa-obNWU4yCVMjYSX-UX9z_ZMMuPyCiN8NXCvjrZlgrbwew08MAhXwNE2SWxxaLTK5My1fil36kaDuw09tD22BxAGe7cYURx94Ov8W6poJKCt9Ff2KxbzxC7R_mKcNXrX7x3eWXHFhryBNVH0-7QBdwy5SiXA0nLEVqo25bsdRmorWTbgB36AINAUjfR5mk6eS6GBGTK_rQ6fzTikNw3Rz-Lx794S-ZKCcsN1Jxhr8lIpNQGFdne3Ax4-a53KwtOmp32FuGf142P4VHn7jyRpMrdj0QXeXhzerQq2T8_7MjMxihUH6D6ouwvNuaztMYZVEIK6_2Z42s5OE4l7izNf6JEAnykAGq5w4eUCpI6Yypx0tf072s92etSwZnE9lkijjlJv91k8r3pzP3BHH9C98nO506AehwXP1ea2iKnJEHDYUdVk_mYH3dXdwpoacOWn1KOynOiYO6hFgIP7fNMBXqw9JClGQISZdFFOJWR56uIwOAyN0jfA8vtS1DL_GhOMFBjtirpeZBftgeG70947mvCEp0VNof6DFyx4FnR4w3ASFhysDREvAXQ-ckEBY5o1du36l6W6M8m3_8clRXddPqCu1l2LQf7F9PgxrVCFNfxG5R3kHQoOUnW1L5kLyKDjFaSOQs3xmT6G0BMr9tq96CdA2xDTQzsfDEBBT--0hL-ZikLEcbbVOTKu8uF3EZFIQWpe43B6SmEGI"
+    },
+    {
+        "domain": ".justrunmy.app",
+        "httpOnly": true,
+        "name": ".AspNetCore.Antiforgery.NCGjD_ZE8wU",
+        "path": "/",
+        "sameSite": "Strict",
+        "secure": true,
+        "value": "CfDJ8OSdq0H9d59DhJPlCv_ciG0JeqqbVIB9SIkyjvZAj9jFL8hASXTVNqKD3drxpeDZ0EbZMUSbVytK8GGgrL5JftxQA6g5dYfapQZ4sr6__bD6irfiojWabmru3C1lcRHHfvy8O_y9QWUwR2arc25I8XY"
     }
 ]
